@@ -84,7 +84,7 @@ const VolunteerDashboard = () => {
             Next for Autism Volunteer Dashboard
           </h1>
           <p className="text-gray-600">
-            Compare self-reviews and observer feedback
+           
           </p>
         </div>
 
