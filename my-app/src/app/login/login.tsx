@@ -1,41 +1,63 @@
+"use client";
+
 import Image from "next/image";
 import "./login.css";
+import { GoogleSignInButton } from "../Components/GoogleSignInButton";
 
 export default function Login() {
+  const handleGoogleSignIn = async () => {
+    // TODO: Implement Google OAuth authentication
+    // Example: Redirect to Google OAuth or use a library like next-auth
+    // window.location.href = '/api/auth/google';
+    console.log("Google sign-in clicked");
+  };
+
   return (
-    <div className="relative w-full h-screen">
+    <div className="relative w-full h-screen flex items-center justify-center" style={{ backgroundColor: '#363942' }}>
       <Image
         src="/striped-pattern.jpg"
         alt="Background"
         fill
-        className="object-cover opacity-3"
+        className="object-cover opacity-5"
         priority
-        
+        style={{ mixBlendMode: 'overlay' }}
       />
-      <div className="absolute left-[8vw] top-1/2 -translate-y-1/2 w-[30vw] max-w-[400px] min-w-[200px]">
-        <Image
-          src="/next-for-autism-logo.svg"
-          alt="Next.js Logo"
-          width={500}
-          height={500}
-          className="object-contain w-full h-auto"
-        />
-      </div>
-      <div className="absolute right-[5vw] top-1/2 -translate-y-1/2 w-[45vw] max-w-[45vw] h-[80vh] max-h-[80vw] rounded-[3vw] shadow-lg p-[2vw]" style={{ backgroundColor: 'rgb(217,217,217)' }}>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[30vw] h-[4vh] rounded-lg" style={{ backgroundColor: 'rgba(0, 38, 62, 1)' }}></div>
-        <h3 className="welcome-font absolute left-1/2 -translate-x-1/2" style={{ textAlign: 'center', top: '25%', fontSize: '2vw', fontWeight: 'bold' }}>Welcome Back</h3>
-        <div className="absolute left-1/2 -translate-x-1/2 w-[35vw] h-[5vh] rounded-md border-2" style={{ backgroundColor: 'white', borderColor: 'rgb(209, 213, 219)', top: '35%' }}>
-            <span style={{ position: 'absolute', left: '1vw', top: '50%', transform: 'translateY(-50%)', fontSize: '1.2vw', color: 'gray' }}>Username</span>
+      <div className="relative z-80 bg-white rounded-2xl flex flex-col items-center" style={{ 
+        width: '70vw', 
+        height: '70vh', 
+        padding: '10vw',
+        paddingTop: '10vh',
+        gap: '4vh',
+        boxShadow: '0 50px 50px -20px rgba(0, 0, 0, 0.5)' 
+      }}>
+        <div className="flex justify-center items-center" style={{ width: '100%' }}>
+          <Image
+            src="/next-for-autism-logo.svg"
+            alt="Next for Autism Logo"
+            width={5}
+            height={50}
+            className="object-contain"
+            style={{ width: '15vw', height: 'auto', paddingTop: '3vh' }
+      }
+          />
         </div>
-<div className="absolute left-1/2 -translate-x-1/2 w-[35vw] h-[5vh] rounded-md border-2" style={{ backgroundColor: 'white', borderColor: 'rgb(209, 213, 219)', top: '45%' }}>
-    <span style={{ position: 'absolute', left: '1vw', top: '50%', transform: 'translateY(-50%)', fontSize: '1.2vw', color: 'gray' }}>Password</span>
-</div>
-
-<div className="absolute left-1/2 -translate-x-1/2 w-[25vw] h-[8vh] rounded-[3vw] flex items-center justify-center" style={{ backgroundColor: 'rgba(136, 174, 245, 1)', top: '55%' }}>
-    <a href = "questions.tsx"><span style={{ color: 'white', fontSize: '2vw', fontWeight: 'bold' }}>Login</span></a>
-</div>
-</div>
-      
+        <div className="flex justify-center items-center" style={{ width: '100%', marginTop: '2vh' }}>
+          <GoogleSignInButton 
+            onClick={handleGoogleSignIn}
+            type="button"
+            className="bg-black text-white font-light shadow-md hover:bg-gray-700 transition-colors"
+            style={{ 
+              padding: '1.1vh 2.5vw',
+              fontSize: '0.8vw',
+              width: '20.0vw',
+              borderRadius: '18pt',
+              fontWeight: '200',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
