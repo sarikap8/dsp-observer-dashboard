@@ -1,5 +1,7 @@
-import Login from "./login/login";
+'use client';
+
+import VolunteerDashboard from "../comparison/VolunteerDashboard";
 
 export default function Home() {
-  return <Login />;
+  return <VolunteerDashboard />;
 }
