@@ -3,19 +3,31 @@
 import React, { useState } from 'react';
 import { Search, Filter, FileText, AlertCircle, User } from 'lucide-react';
 
+type Volunteer = {
+  id: number;
+  name: string;
+  role: string;
+  department: string;
+  initials: string;
+  color: string;
+  selfReviews: number;
+  observerReviews: number;
+  lastReview: string;
+};
+
 const VolunteerDashboard = () => {
-  const [selectedVolunteer, setSelectedVolunteer] = useState(null);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
 
-  const volunteers = [
+  const volunteers: Volunteer[] = [
     {
       id: 1,
       name: 'Sarah Martinez',
       role: 'Event Coordinator',
       department: 'Community Outreach',
       initials: 'SM',
-      color: 'bg-purple-500',
+      color: 'bg-[#cb333b]',
       selfReviews: 2,
       observerReviews: 3,
       lastReview: 'Oct 31, 2025'
@@ -26,7 +38,7 @@ const VolunteerDashboard = () => {
       role: 'Fundraising Assistant',
       department: 'Development',
       initials: 'JC',
-      color: 'bg-blue-500',
+      color: 'bg-[#cb333b]',
       selfReviews: 1,
       observerReviews: 2,
       lastReview: 'Oct 27, 2025'
@@ -37,7 +49,7 @@ const VolunteerDashboard = () => {
       role: 'Program Volunteer',
       department: 'Education',
       initials: 'ET',
-      color: 'bg-indigo-500',
+      color: 'bg-[#cb333b]',
       selfReviews: 3,
       observerReviews: 4,
       lastReview: 'Nov 2, 2025'
@@ -48,7 +60,7 @@ const VolunteerDashboard = () => {
       role: 'Outreach Coordinator',
       department: 'Community Outreach',
       initials: 'MR',
-      color: 'bg-green-500',
+      color: 'bg-[#cb333b]',
       selfReviews: 2,
       observerReviews: 2,
       lastReview: 'Oct 29, 2025'
@@ -145,7 +157,7 @@ const VolunteerDashboard = () => {
                   onClick={() => setSelectedVolunteer(volunteer)}
                   className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                     selectedVolunteer?.id === volunteer.id
-                      ? 'border-purple-500 bg-purple-50'
+                      ? 'border-[rgb(0,114,206)] bg-[rgb(226,233,245)]'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -157,24 +169,24 @@ const VolunteerDashboard = () => {
                     </div>
 
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-[#041e42]">
                         {volunteer.name}
                       </h3>
-                      <p className="text-sm text-gray-600">{volunteer.role}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-sm text-[#536077]">{volunteer.role}</p>
+                      <p className="text-xs text-[#9099a6] mt-1">
                         {volunteer.department}
                       </p>
 
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 mt-2 text-xs text-[#9099a6]">
                         <span className="flex items-center gap-1">
-                          <span className="font-medium text-gray-700">
+                          <span className="font-medium text-[#536077]">
                             {volunteer.selfReviews}
                           </span>{' '}
                           self
                         </span>
 
                         <span className="flex items-center gap-1">
-                          <span className="font-medium text-gray-700">
+                          <span className="font-medium text-[#536077]">
                             {volunteer.observerReviews}
                           </span>{' '}
                           observer
