@@ -48,10 +48,10 @@ export default function Login() {
         <div className="flex justify-center items-center google-login-wrapper" style={{ width: '100%', marginTop: '2vh' }}>
           <GoogleLogin 
             onSuccess={() => {
-              console.log("hi taran");
+              console.log("login success");
               router.push('/form');
             }} 
-            onError={() => console.log("bai taran")}
+            onError={() => console.log("login error")}
           />
           {/* <GoogleSignInButton 
             onClick={handleGoogleSignIn}
