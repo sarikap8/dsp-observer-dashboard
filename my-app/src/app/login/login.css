@@ -4,3 +4,71 @@
     font-family: 'Inter', sans-serif;
     
   }
+
+/* Google Login Button Styling - Black Pill Style */
+.google-login-wrapper {
+  width: 100%;
+  margin-top: 2vh;
+}
+
+/* Target all possible Google button elements */
+.google-login-wrapper button,
+.google-login-wrapper div[role="button"],
+.google-login-wrapper .gsi-material-button,
+.google-login-wrapper button[type="button"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 18pt !important;
+  padding: 1.1vh 2.5vw !important;
+  font-size: 0.8vw !important;
+  font-weight: 200 !important;
+  font-family: inherit !important;
+  width: 15.0vw !important;
+  min-width: 15.0vw !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transition: background-color 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5vw !important;
+  position: relative !important;
+}
+
+.google-login-wrapper button:hover,
+.google-login-wrapper div[role="button"]:hover,
+.google-login-wrapper .gsi-material-button:hover {
+  background-color: #333333 !important;
+}
+
+.google-login-wrapper button:active,
+.google-login-wrapper div[role="button"]:active,
+.google-login-wrapper .gsi-material-button:active {
+  background-color: #1a1a1a !important;
+}
+
+/* Style the Google icon */
+.google-login-wrapper svg,
+.google-login-wrapper .gsi-material-button-icon svg {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 0.5vw !important;
+}
+
+/* Style the text content */
+.google-login-wrapper span,
+.google-login-wrapper .gsi-material-button-contents {
+  color: #ffffff !important;
+  font-weight: 200 !important;
+  font-size: 0.8vw !important;
+}
+
+/* Style the content wrapper */
+.google-login-wrapper .gsi-material-button-content-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5vw !important;
+}
