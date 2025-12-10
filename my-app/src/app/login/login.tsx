@@ -3,6 +3,8 @@
 import Image from "next/image";
 import "./login.css";
 import { GoogleSignInButton } from "../../../components/GoogleSignInButton";
+import {GoogleLogin} from '@react-oauth/google';
+import {useRouter} from 'next/navigation';
 
 export default function Login() {
   const handleGoogleSignIn = async () => {
@@ -11,8 +13,10 @@ export default function Login() {
     // window.location.href = '/api/auth/google';
     console.log("Google sign-in clicked");
   };
+  const router = useRouter();
 
   return (
+    <>
     <div className="relative w-full h-screen flex items-center justify-center" style={{ backgroundColor: '#363942' }}>
       <Image
         src="/striped-pattern.jpg"
@@ -41,8 +45,15 @@ export default function Login() {
       }
           />
         </div>
-        <div className="flex justify-center items-center" style={{ width: '100%', marginTop: '2vh' }}>
-          <GoogleSignInButton 
+        <div className="flex justify-center items-center google-login-wrapper" style={{ width: '100%', marginTop: '2vh' }}>
+          <GoogleLogin 
+            onSuccess={() => {
+              console.log("login success");
+              router.push('/form');
+            }} 
+            onError={() => console.log("login error")}
+          />
+          {/* <GoogleSignInButton 
             onClick={handleGoogleSignIn}
             type="button"
             className="bg-black text-white font-light shadow-md hover:bg-gray-700 transition-colors"
@@ -55,9 +66,10 @@ export default function Login() {
               border: 'none',
               cursor: 'pointer'
             }}
-          />
+          /> */}
         </div>
       </div>
     </div>
+    </>
   );
 }
