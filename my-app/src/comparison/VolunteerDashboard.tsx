@@ -1,61 +1,44 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, FileText, AlertCircle, User } from 'lucide-react';
 
 const VolunteerDashboard = () => {
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
-
-  const volunteers = [
-    {
-      id: 1,
-      name: 'Sarah Martinez',
-      role: 'Event Coordinator',
-      department: 'Community Outreach',
-      initials: 'SM',
-      color: 'bg-purple-500',
-      selfReviews: 2,
-      observerReviews: 3,
-      lastReview: 'Oct 31, 2025'
-    },
-    {
-      id: 2,
-      name: 'James Chen',
-      role: 'Fundraising Assistant',
-      department: 'Development',
-      initials: 'JC',
-      color: 'bg-blue-500',
-      selfReviews: 1,
-      observerReviews: 2,
-      lastReview: 'Oct 27, 2025'
-    },
-    {
-      id: 3,
-      name: 'Emily Thompson',
-      role: 'Program Volunteer',
-      department: 'Education',
-      initials: 'ET',
-      color: 'bg-indigo-500',
-      selfReviews: 3,
-      observerReviews: 4,
-      lastReview: 'Nov 2, 2025'
-    },
-    {
-      id: 4,
-      name: 'Michael Rodriguez',
-      role: 'Outreach Coordinator',
-      department: 'Community Outreach',
-      initials: 'MR',
-      color: 'bg-green-500',
-      selfReviews: 2,
-      observerReviews: 2,
-      lastReview: 'Oct 29, 2025'
-    }
-  ];
+  const [volunteers, setVolunteers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const departments = ['all', 'Community Outreach', 'Development', 'Education'];
+    // Fetch volunteers from backend
+    useEffect(() => {
+      const fetchVolunteers = async () => {
+        try {
+          setLoading(true);
+          // Replace this URL with your actual backend endpoint
+          const response = await fetch('/api/volunteers');
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch volunteers');
+          }
+          
+          const data = await response.json();
+          setVolunteers(data);
+          setError(null);
+        } catch (err) {
+          setError(err.message);
+          console.error('Error fetching volunteers:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchVolunteers();
+    }, []);
+  
+  
 
   const filteredVolunteers = volunteers.filter(v => {
     const matchesSearch =
