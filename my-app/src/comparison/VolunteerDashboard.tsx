@@ -88,12 +88,12 @@ const VolunteerDashboard = () => {
   const pendingReviews = 4;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-[#ffffff] p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Next for Autism Volunteer Dashboard
+        <div className="mb-5">
+          <h1 className="text-3xl font-bold text-[#041e42] mb-2"> 
+            DSP Performance Dashboard
           </h1>
           <p className="text-gray-600">
            
@@ -105,11 +105,11 @@ const VolunteerDashboard = () => {
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Reviews</p>
-                <p className="text-3xl font-bold text-gray-900">{totalReviews}</p>
+                <p className="text-sm text-[#041e42] mb-1">Total Reviews</p>
+                <p className="text-3xl font-bold text-[#041e42]">{totalReviews}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-[#e2e9f1] rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-[#0072ec]" />
               </div>
             </div>
           </div>
@@ -117,11 +117,11 @@ const VolunteerDashboard = () => {
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Reviews Pending</p>
-                <p className="text-3xl font-bold text-gray-900">{pendingReviews}</p>
+                <p className="text-sm text-[#041e42] mb-1">Reviews Pending</p>
+                <p className="text-3xl font-bold text-[#041e42]">{pendingReviews}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-[#f8e1e4] rounded-lg flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-[#cb333b]" />
               </div>
             </div>
           </div>
@@ -131,7 +131,7 @@ const VolunteerDashboard = () => {
         <div className="grid grid-cols-2 gap-6">
           {/* Volunteers List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-xl font-semibold text-[#041e42] mb-4">
               Volunteers
             </h2>
 
