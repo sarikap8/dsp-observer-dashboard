@@ -114,16 +114,16 @@ const VolunteerDashboard = () => {
         <div className="grid grid-cols-2 gap-6">
           {/* Volunteers List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-[#041e42] mb-4">
-              Volunteers
-            </h2>
+            <h1 className="text-xl font-semibold text-[#041e42] mb-4">
+              Direct Service Professionals
+            </h1>
 
             {/* Search */}
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search volunteers..."
+                placeholder="Search individuals..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -261,7 +261,7 @@ const VolunteerDashboard = () => {
               <div className="h-full flex flex-col items-center justify-center text-gray-400">
                 <User className="w-24 h-24 mb-4" />
                 <p className="text-lg">
-                  Select a volunteer to view feedback comparison
+                  Select an individual to view feedback form comparison
                 </p>
               </div>
             )}
