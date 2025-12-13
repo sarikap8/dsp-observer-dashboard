@@ -17,32 +17,14 @@
     "db:migrate:prod": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "npx tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "npx prisma generate"
   },
   "dependencies": {
-<<<<<<< HEAD
+    "@react-oauth/google": "^0.12.2",
     "lucide-react": "^0.555.0",
-    "next": "16.0.0",
+    "next": "^16.0.10",
     "react": "19.2.0",
     "react-dom": "19.2.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-=======
-    "@prisma/client": "^6.19.1",
-    "@react-oauth/google": "^0.12.2",
-    "next": "16.0.0",
-    "prisma": "^6.19.1",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "react-router-dom": "^7.10.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -62,6 +44,5 @@
     "tsx": "^4.21.0",
     "typescript": "^5",
     "whatwg-fetch": "^3.6.20"
->>>>>>> 78e3a58c51315db33af17614302d34bbb1931eb9
   }
 }
