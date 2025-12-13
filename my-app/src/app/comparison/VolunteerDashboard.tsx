@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Star, User } from 'lucide-react';
+import { Search, Star, User, Mail } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image'; 
 import { useRouter } from 'next/navigation';
@@ -143,12 +143,12 @@ const ComparisonRow = ({
   const diff = selfValue !== null && observerValue !== null ? selfValue - observerValue : null;
   
   return (
-    <div className="grid grid-cols-3 gap-4 py-2 border-b border-gray-100 items-center hover:bg-gray-50">
-      <div className="text-sm text-gray-700">{label}</div>
-      <div className="flex justify-center">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2 border-b border-gray-100 items-center hover:bg-gray-50 w-full">
+      <div className="text-sm text-gray-700 break-words min-w-0">{label}</div>
+      <div className="flex justify-center min-w-0">
         <StarRating value={selfValue} />
       </div>
-      <div className="flex justify-center items-center gap-2">
+      <div className="flex justify-center items-center gap-2 min-w-0">
         <StarRating value={observerValue} />
         {diff !== null && diff !== 0 && (
           <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
@@ -241,7 +241,7 @@ const DspComparisonView = ({ activeUser }: { activeUser: { email: string; name: 
       </div>
 
       {/* Comparison View */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 max-h-[700px] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-lg p-6 max-h-[700px] overflow-y-auto overflow-x-hidden">
         {loading ? (
           <div className="text-center py-12 text-gray-500">Loading your evaluations...</div>
         ) : !selfResponse && !observerResponse ? (
@@ -261,6 +261,7 @@ const DspComparisonView = ({ activeUser }: { activeUser: { email: string; name: 
             observerAvg={observerAvg}
             selfLabel="My Self Rating"
             observerLabel="Observer Rating"
+            stickyTop={0}
           />
         )}
       </div>
@@ -343,6 +344,62 @@ const ObserverComparisonView = ({ activeUser }: { activeUser: { email: string; n
   const observerResponse = submissionData?.observerEvaluations?.[0]?.questionResponse;
   const selfAvg = calcAverage(selfResponse);
   const observerAvg = calcAverage(observerResponse);
+  const mailToHref = selectedDsp
+    ? (() => {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const subject = 'Friendly reminder: your self-evaluation is due soon';
+        const body = [
+          `Dear ${selectedDsp.name},`,
+          '',
+          'This is a friendly reminder that your self-evaluation performance review form is due soon.',
+          'We have not yet received your submission and wanted to ensure you have adequate time to complete the evaluation before the deadline.',
+          '',
+          'What You Need to Do:',
+          '1. Log in to the performance dashboard',
+          '2. Complete your self-evaluation form',
+          '3. After submission, return to the dashboard to review your personalized resource recommendations',
+          '',
+          'Once you complete your form, our system will automatically generate personalized resource recommendations based on your feedback and your manager\'s evaluation. These resources are designed to support your professional growth and development. Be sure to log back into the dashboard to review these recommendations.',
+          '',
+          `Access the form: ${origin}/form`,
+          '',
+          `Need help? Contact ${activeUser.name} at ${activeUser.email}`,
+          '',
+          'Thank you for your dedication to providing excellent service!',
+          '',
+          'Best regards,',
+          'NEXT for Autism Team',
+        ].join('\n');
+        return `mailto:${selectedDsp.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      })()
+    : undefined;
+  const stickyDspHeader = selectedDsp ? (
+    <div className="flex items-start sm:items-center justify-between gap-4">
+      <div className="flex items-center gap-4 min-w-0">
+        <div className={`w-12 h-12 ${selectedDsp.color} rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0`}>
+          {selectedDsp.initials}
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">{selectedDsp.name}</h2>
+          <p className="text-sm text-gray-500 truncate">{selectedDsp.email}</p>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <a
+          href={mailToHref}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[rgb(0,114,206)] text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 transition whitespace-nowrap"
+        >
+          <Mail className="w-4 h-4" />
+          Email DSP
+        </a>
+        <div className="text-right">
+          <p className="text-xs sm:text-sm text-gray-600">Observer (You):</p>
+          <p className="font-medium text-gray-800 truncate max-w-[140px] sm:max-w-none">{activeUser.name}</p>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -395,27 +452,9 @@ const ObserverComparisonView = ({ activeUser }: { activeUser: { email: string; n
         </div>
 
         {/* Comparison View - Right (3 columns) */}
-        <div className="col-span-3 bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[700px] overflow-y-auto">
+        <div className="col-span-3 bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[700px] overflow-y-auto overflow-x-hidden">
           {selectedDsp ? (
             <div>
-              {/* Header with DSP info */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b sticky top-0 bg-white z-10">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 ${selectedDsp.color} rounded-full flex items-center justify-center text-white font-semibold text-lg`}>
-                    {selectedDsp.initials}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{selectedDsp.name}</h2>
-                    <p className="text-sm text-gray-500">{selectedDsp.email}</p>
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Observer (You):</p>
-                  <p className="font-medium text-gray-800">{activeUser.name}</p>
-                </div>
-              </div>
-
               {loadingSubmissions ? (
                 <div className="text-center py-12 text-gray-500">Loading submissions...</div>
               ) : !selfResponse && !observerResponse ? (
@@ -432,6 +471,8 @@ const ObserverComparisonView = ({ activeUser }: { activeUser: { email: string; n
                   observerAvg={observerAvg}
                   selfLabel="DSP Self Rating"
                   observerLabel="Your Rating"
+                  stickyTopSlot={stickyDspHeader}
+                  stickyTop={0}
                 />
               )}
             </div>
@@ -465,6 +506,8 @@ const ComparisonContent = ({
   observerAvg,
   selfLabel,
   observerLabel,
+  stickyTopSlot,
+  stickyTop = 0,
 }: { 
   selfResponse: QuestionResponse | undefined; 
   observerResponse: QuestionResponse | undefined;
@@ -472,19 +515,29 @@ const ComparisonContent = ({
   observerAvg: string | null;
   selfLabel: string;
   observerLabel: string;
-}) => {
+  stickyTopSlot?: React.ReactNode;
+  stickyTop?: number;
+ }) => {
+  const headerTop = Math.max(stickyTop, 0);
   return (
-    <div className="space-y-6">
-      {/* Column Headers */}
-      <div className="grid grid-cols-3 gap-4 py-3 bg-gray-100 rounded-lg px-4 font-semibold text-sm sticky top-0 z-10">
-        <div className="text-gray-700">Question</div>
-        <div className="text-center text-blue-600">
-          {selfLabel}
-          {selfAvg && <span className="ml-2 text-xs font-normal">(avg: {selfAvg})</span>}
-        </div>
-        <div className="text-center text-green-600">
-          {observerLabel}
-          {observerAvg && <span className="ml-2 text-xs font-normal">(avg: {observerAvg})</span>}
+    <div className="space-y-6 w-full max-w-full overflow-hidden">
+      {/* Sticky Header block (DSP info + column labels) */}
+      <div className="sticky z-20 w-full max-w-full" style={{ top: headerTop }}>
+        {stickyTopSlot && (
+          <div className="bg-white px-4 py-4 border-b border-gray-200">
+            {stickyTopSlot}
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-3 bg-gray-100 rounded-lg px-4 font-semibold text-sm w-full max-w-full">
+          <div className="text-gray-700 break-words min-w-0">Question</div>
+          <div className="text-center text-blue-600 min-w-0">
+            {selfLabel}
+            {selfAvg && <span className="ml-2 text-xs font-normal">(avg: {selfAvg})</span>}
+          </div>
+          <div className="text-center text-green-600 min-w-0">
+            {observerLabel}
+            {observerAvg && <span className="ml-2 text-xs font-normal">(avg: {observerAvg})</span>}
+          </div>
         </div>
       </div>
 
@@ -500,9 +553,9 @@ const ComparisonContent = ({
 
       {/* Sections */}
       {SECTIONS.map((section) => (
-        <div key={section.name} className={`border-l-4 ${section.color} ${section.bg} rounded-r-lg p-4`}>
+        <div key={section.name} className={`border-l-4 ${section.color} ${section.bg} rounded-r-lg p-4 overflow-hidden`}>
           <h3 className="font-bold text-gray-800 mb-3 text-sm uppercase tracking-wide">{section.name}</h3>
-          <div className="bg-white rounded-lg p-3">
+          <div className="bg-white rounded-lg p-3 overflow-hidden">
             {section.questions.map((qKey) => (
               <ComparisonRow
                 key={qKey}
