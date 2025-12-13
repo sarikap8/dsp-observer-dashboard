@@ -1,0 +1,137 @@
+// Prisma Schema for DSP Observer Evaluation System
+// PostgreSQL database with three main tables: Observer, DSP, and QuestionResponse
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// QUESTION RESPONSE TABLE
+// Stores the 33 numeric answers for each form submission
+// ============================================================================
+model QuestionResponse {
+  id        String   @id @default(uuid()) @map("question_response_id")
+  
+  // 33 question responses (nullable to allow partial submissions if needed)
+  q1        Int?
+  q2        Int?
+  q3        Int?
+  q4        Int?
+  q5        Int?
+  q6        Int?
+  q7        Int?
+  q8        Int?
+  q9        Int?
+  q10       Int?
+  q11       Int?
+  q12       Int?
+  q13       Int?
+  q14       Int?
+  q15       Int?
+  q16       Int?
+  q17       Int?
+  q18       Int?
+  q19       Int?
+  q20       Int?
+  q21       Int?
+  q22       Int?
+  q23       Int?
+  q24       Int?
+  q25       Int?
+  q26       Int?
+  q27       Int?
+  q28       Int?
+  q29       Int?
+  q30       Int?
+  q31       Int?
+  q32       Int?
+  q33       Int?
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations (one QuestionResponse can belong to one Observer submission OR one DSP)
+  observerSubmission ObserverSubmission?
+  dspSubmission      DspSubmission?
+  
+  @@map("question_responses")
+}
+
+// ============================================================================
+// OBSERVER TABLE
+// Tracks observer evaluations of DSPs
+// - Each observer can submit multiple evaluations for the same DSP
+// - Repeat submissions for the same (observer, dsp) pair UPDATE the existing row
+// ============================================================================
+model Observer {
+  id        String   @id @default(uuid()) @map("observer_id")
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // An observer can have multiple submissions (evaluating different DSPs)
+  submissions ObserverSubmission[]
+  
+  @@map("observers")
+}
+
+// Junction table to track which observer evaluated which DSP
+model ObserverSubmission {
+  id                  String   @id @default(uuid()) @map("submission_id")
+  observerId          String   @map("observer_id")
+  dspId               String   @map("dsp_id")
+  questionResponseId  String   @unique @map("question_response_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  observer          Observer         @relation(fields: [observerId], references: [id], onDelete: Cascade)
+  dsp               Dsp              @relation(fields: [dspId], references: [id], onDelete: Cascade)
+  questionResponse  QuestionResponse @relation(fields: [questionResponseId], references: [id], onDelete: Cascade)
+  
+  // Unique constraint: one submission per (observer, dsp) pair
+  // Repeat submissions will UPDATE this row instead of creating new
+  @@unique([observerId, dspId])
+  @@map("observer_submissions")
+}
+
+// ============================================================================
+// DSP TABLE
+// Each DSP has exactly one row
+// DSPs can submit self-evaluations; repeat submissions UPDATE the existing row
+// ============================================================================
+model Dsp {
+  id        String   @id @default(uuid()) @map("dsp_id")
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // A DSP can be evaluated by multiple observers
+  observerSubmissions ObserverSubmission[]
+  
+  // A DSP has one self-evaluation submission
+  selfSubmission DspSubmission?
+  
+  @@map("dsps")
+}
+
+// DSP self-evaluation submission
+model DspSubmission {
+  id                  String   @id @default(uuid()) @map("submission_id")
+  dspId               String   @unique @map("dsp_id")
+  questionResponseId  String   @unique @map("question_response_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  dsp               Dsp              @relation(fields: [dspId], references: [id], onDelete: Cascade)
+  questionResponse  QuestionResponse @relation(fields: [questionResponseId], references: [id], onDelete: Cascade)
+  
+  @@map("dsp_submissions")
+}
