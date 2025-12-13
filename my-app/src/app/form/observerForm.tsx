@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, ReactNode, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { RefObject } from "react";
 import { getActiveUser, getDspOptionsForObserver, DspOption, DSP_DIRECTORY } from "./userDirectory";
-import { submitObserverEvaluation } from "@/lib/api";
+import { submitObserverEvaluation, addNewDsp, fetchAllDsps } from "@/lib/api";
 
 type AnimatedSectionProps = {
   isOpen: boolean;
@@ -67,6 +67,30 @@ const createEmptyFormData = () => ({
 
 type FormDataShape = ReturnType<typeof createEmptyFormData>;
 
+const OBSERVER_DSPS_KEY_PREFIX = "observer-dsp-ids:";
+
+const loadSavedObserverDsps = (email: string) => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(`${OBSERVER_DSPS_KEY_PREFIX}${email.toLowerCase()}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
+  } catch (error) {
+    console.error("Error loading observer DSPs from localStorage", error);
+    return [];
+  }
+};
+
+const persistObserverDsps = (email: string, dspIds: string[]) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`${OBSERVER_DSPS_KEY_PREFIX}${email.toLowerCase()}`, JSON.stringify(dspIds));
+  } catch (error) {
+    console.error("Error saving observer DSPs to localStorage", error);
+  }
+};
+
 const AnimatedSection = ({ isOpen, children }: AnimatedSectionProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<string>(isOpen ? "auto" : "0px");
@@ -121,17 +145,30 @@ const AnimatedSection = ({ isOpen, children }: AnimatedSectionProps) => {
 export default function FormPage({ dspOptions = [] }: FormPageProps) {
   const router = useRouter();
   const [availableDsps, setAvailableDsps] = useState<DspOption[]>(dspOptions);
-  const [selectedDsp, setSelectedDsp] = useState("");
+  const [allDsps, setAllDsps] = useState<DspOption[]>([]);
+  const [observerDspIds, setObserverDspIds] = useState<string[]>([]);
+  const [selectedDsps, setSelectedDsps] = useState<string[]>([]); // Multiple selection
+  const [currentDsp, setCurrentDsp] = useState(""); // Currently active DSP for form
   const [formsByDsp, setFormsByDsp] = useState<Record<string, FormDataShape>>({});
   const [submittedDsps, setSubmittedDsps] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [activeUser, setActiveUserState] = useState<{ email: string; name: string } | null>(null);
+  const [isLoadingDsps, setIsLoadingDsps] = useState(true);
+  const [showDspDropdown, setShowDspDropdown] = useState(false);
+  const [showAddDspMenu, setShowAddDspMenu] = useState(false);
+  
+  // Add DSP modal state
+  const [showAddDspModal, setShowAddDspModal] = useState(false);
+  const [newDspName, setNewDspName] = useState("");
+  const [newDspEmail, setNewDspEmail] = useState("");
+  const [addDspError, setAddDspError] = useState<string | null>(null);
+  const [isAddingDsp, setIsAddingDsp] = useState(false);
 
   const formData = useMemo(() => {
-    if (!selectedDsp) return createEmptyFormData();
-    return formsByDsp[selectedDsp] ?? createEmptyFormData();
-  }, [formsByDsp, selectedDsp]);
+    if (!currentDsp) return createEmptyFormData();
+    return formsByDsp[currentDsp] ?? createEmptyFormData();
+  }, [formsByDsp, currentDsp]);
 
   const [expandedSections, setExpandedSections] = useState({
     choice: true,
@@ -144,6 +181,7 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
   const belongingHeaderRef = useRef<HTMLDivElement>(null);
   const lifelongHeaderRef = useRef<HTMLDivElement>(null);
   const healthyHeaderRef = useRef<HTMLDivElement>(null);
+  const addMenuRef = useRef<HTMLDivElement>(null);
 
   // Define fields for each section
   const choiceFields = [
@@ -188,26 +226,103 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
     }
     
     setActiveUserState({ email: active.email, name: active.name });
-
-    const directoryOptions = getDspOptionsForObserver(active.email);
-    if (directoryOptions.length) {
-      setAvailableDsps(directoryOptions);
-      setSelectedDsp(directoryOptions[0]?.value || "");
-    } else if (dspOptions.length) {
-      setAvailableDsps(dspOptions);
-      setSelectedDsp(dspOptions[0].value);
-    }
     
+    // Fetch all DSPs from the database
+    const loadDsps = async () => {
+      setIsLoadingDsps(true);
+      const optionMap = new Map<string, DspOption>();
+      
+      // Start with all known directory DSPs so observers can add them later
+      Object.values(DSP_DIRECTORY).forEach((option) => {
+        optionMap.set(option.value, { value: option.value, label: option.label });
+      });
+      dspOptions.forEach((option) => {
+        optionMap.set(option.value, option);
+      });
+
+      const directoryOptions = getDspOptionsForObserver(active.email);
+      const baseIds = directoryOptions.map((opt) => opt.value);
+      const savedIds = loadSavedObserverDsps(active.email);
+
+      try {
+        const result = await fetchAllDsps();
+        if (result.success && result.data) {
+          const dbDsps: DspOption[] = result.data.map((dsp: { email: string; name: string }) => ({
+            value: dsp.email,
+            label: dsp.name,
+          }));
+          dbDsps.forEach((dbDsp) => optionMap.set(dbDsp.value, dbDsp));
+        }
+      } catch (error) {
+        console.error("Error loading DSPs:", error);
+      } finally {
+        const allOptions = Array.from(optionMap.values());
+        setAllDsps(allOptions);
+
+        const combinedIds = Array.from(new Set([...baseIds, ...savedIds]));
+        if (combinedIds.length > 0) {
+          setObserverDspIds(combinedIds);
+          setAvailableDsps(allOptions.filter((opt) => combinedIds.includes(opt.value)));
+        } else {
+          setObserverDspIds([]);
+          setAvailableDsps(directoryOptions.length ? directoryOptions : []);
+        }
+
+        setIsLoadingDsps(false);
+      }
+    };
+    
+    loadDsps();
     setInitialized(true);
   }, [initialized, router, dspOptions]);
 
+  // Keep available DSP list in sync with assigned IDs when new options are discovered
   useEffect(() => {
-    if (!selectedDsp) return;
+    if (!allDsps.length || !observerDspIds.length) {
+      if (!observerDspIds.length) {
+        setAvailableDsps([]);
+      }
+      return;
+    }
+    setAvailableDsps(allDsps.filter((opt) => observerDspIds.includes(opt.value)));
+  }, [allDsps, observerDspIds]);
+
+  // Persist added DSPs per observer so they keep their list across sessions
+  useEffect(() => {
+    if (!activeUser?.email) return;
+    persistObserverDsps(activeUser.email, observerDspIds);
+  }, [observerDspIds, activeUser?.email]);
+
+  // Close the add menu when clicking outside
+  useEffect(() => {
+    if (!showAddDspMenu) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
+        setShowAddDspMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showAddDspMenu]);
+
+  // Initialize form data for current DSP
+  useEffect(() => {
+    if (!currentDsp) return;
     setFormsByDsp(prev => {
-      if (prev[selectedDsp]) return prev;
-      return { ...prev, [selectedDsp]: createEmptyFormData() };
+      if (prev[currentDsp]) return prev;
+      return { ...prev, [currentDsp]: createEmptyFormData() };
     });
-  }, [selectedDsp]);
+  }, [currentDsp]);
+  
+  // When selected DSPs change, set current DSP to first one if not set
+  useEffect(() => {
+    if (selectedDsps.length > 0 && !currentDsp) {
+      setCurrentDsp(selectedDsps[0]);
+    }
+    if (selectedDsps.length === 0) {
+      setCurrentDsp("");
+    }
+  }, [selectedDsps, currentDsp]);
 
   const sectionRefs: Record<keyof typeof expandedSections, RefObject<HTMLDivElement>> = {
     choice: choiceHeaderRef,
@@ -216,10 +331,56 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
     healthyLiving: healthyHeaderRef,
   };
 
-  const selectedDspLabel = useMemo(() => {
-    const match = availableDsps.find(option => option.value === selectedDsp);
+  const currentDspLabel = useMemo(() => {
+    const match = availableDsps.find(option => option.value === currentDsp);
     return match?.label || "";
-  }, [availableDsps, selectedDsp]);
+  }, [availableDsps, currentDsp]);
+  
+  // Get labels for selected DSPs
+  const addableDspOptions = useMemo(() => {
+    return allDsps.filter((option) => !observerDspIds.includes(option.value));
+  }, [allDsps, observerDspIds]);
+  
+  // Toggle DSP selection
+  const toggleDspSelection = (dspValue: string) => {
+    setSelectedDsps(prev => {
+      if (prev.includes(dspValue)) {
+        return prev.filter(v => v !== dspValue);
+      } else {
+        return [...prev, dspValue];
+      }
+    });
+  };
+  
+  // Select all DSPs
+  const selectAllDsps = () => {
+    setSelectedDsps(availableDsps.map(d => d.value));
+  };
+  
+  // Clear all selections
+  const clearAllDsps = () => {
+    setSelectedDsps([]);
+    setCurrentDsp("");
+  };
+
+  const handleAddExistingDsp = (dspValue: string) => {
+    setObserverDspIds((prev) => {
+      if (prev.includes(dspValue)) return prev;
+      return [...prev, dspValue];
+    });
+
+    const dspOption = allDsps.find((opt) => opt.value === dspValue);
+    if (dspOption) {
+      setAvailableDsps((prev) => {
+        if (prev.some((opt) => opt.value === dspValue)) return prev;
+        return [...prev, dspOption];
+      });
+    }
+
+    setSelectedDsps((prev) => (prev.includes(dspValue) ? prev : [...prev, dspValue]));
+    setCurrentDsp(dspValue);
+    setShowAddDspMenu(false);
+  };
 
   // Check if section is complete
   const isSectionComplete = (fields: string[]) => {
@@ -305,27 +466,91 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
     });
   };
 
+  // Handle adding a new DSP
+  const handleAddDsp = async () => {
+    setAddDspError(null);
+    
+    const trimmedName = newDspName.trim();
+    const normalizedEmail = newDspEmail.trim().toLowerCase();
+
+    if (!trimmedName) {
+      setAddDspError("Please enter the DSP's name");
+      return;
+    }
+    
+    if (!normalizedEmail) {
+      setAddDspError("Please enter the DSP's email");
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      setAddDspError("Please enter a valid email address");
+      return;
+    }
+    
+    setIsAddingDsp(true);
+    
+    try {
+      const result = await addNewDsp(
+        normalizedEmail,
+        trimmedName,
+        activeUser?.email
+      );
+      
+      if (result.success) {
+        // Add the new DSP to available options
+        const newDspOption: DspOption = {
+          value: normalizedEmail,
+          label: trimmedName,
+        };
+
+        setAllDsps((prev) => {
+          if (prev.some((opt) => opt.value === newDspOption.value)) return prev;
+          return [...prev, newDspOption];
+        });
+        setObserverDspIds((prev) => (prev.includes(newDspOption.value) ? prev : [...prev, newDspOption.value]));
+        setSelectedDsps((prev) => (prev.includes(newDspOption.value) ? prev : [...prev, newDspOption.value]));
+        setCurrentDsp(newDspOption.value);
+        
+        // Reset modal
+        setNewDspName("");
+        setNewDspEmail("");
+        setShowAddDspModal(false);
+      } else {
+        setAddDspError(result.message || "Failed to add DSP");
+      }
+    } catch (error) {
+      console.error("Error adding DSP:", error);
+      setAddDspError("An unexpected error occurred");
+    } finally {
+      setIsAddingDsp(false);
+    }
+  };
+
   const handleChange = (name: string, value: string) => {
-    if (!selectedDsp) return;
+    if (!currentDsp) return;
     setFormsByDsp(prev => {
-      const current = prev[selectedDsp] ?? createEmptyFormData();
+      const current = prev[currentDsp] ?? createEmptyFormData();
       return {
         ...prev,
-        [selectedDsp]: { ...current, [name]: value },
+        [currentDsp]: { ...current, [name]: value },
       };
     });
   };
 
   const handleSubmit = async () => {
-    if (!selectedDsp) return;
+    if (!currentDsp) return;
     if (!activeUser) {
       setSubmitError("User session not found. Please log in again.");
       return;
     }
     
-    // Get DSP info from directory
-    const dspInfo = DSP_DIRECTORY[selectedDsp];
-    if (!dspInfo || !dspInfo.email) {
+    // Get DSP info from directory or use current DSP email
+    const dspInfo = DSP_DIRECTORY[currentDsp];
+    const dspEmail = dspInfo?.email || currentDsp; // Use value as email if not in directory
+    const dspName = dspInfo?.label || availableDsps.find(d => d.value === currentDsp)?.label || currentDsp;
+    if (!dspEmail) {
       setSubmitError("DSP information not found. Please try again.");
       return;
     }
@@ -337,13 +562,13 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
       const result = await submitObserverEvaluation(
         activeUser.email,
         activeUser.name,
-        dspInfo.email,
-        dspInfo.label,
+        dspEmail,
+        dspName,
         formData
       );
       
       if (result.success) {
-        setSubmittedDsps(prev => ({ ...prev, [selectedDsp]: true }));
+        setSubmittedDsps(prev => ({ ...prev, [currentDsp]: true }));
       } else {
         setSubmitError(result.message || "Failed to submit evaluation");
       }
@@ -368,12 +593,14 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
   const belongingCount = getCompletionCount(belongingFields);
   const lifelongLearningCount = getCompletionCount(lifelongLearningFields);
   const healthyLivingCount = getCompletionCount(healthyLivingFields);
-  const isCurrentSubmitted = selectedDsp ? submittedDsps[selectedDsp] === true : false;
-  const otherPending = useMemo(
-    () => availableDsps.filter(option => option.value !== selectedDsp && !submittedDsps[option.value]).length,
-    [availableDsps, selectedDsp, submittedDsps]
+  const isCurrentSubmitted = currentDsp ? submittedDsps[currentDsp] === true : false;
+  const pendingSelectedDsps = useMemo(
+    () => selectedDsps.filter(dspValue => !submittedDsps[dspValue]).length,
+    [selectedDsps, submittedDsps]
   );
-  const completionMessage = otherPending > 0 ? "Please submit your other evaluations" : "All evaluations complete";
+  const completionMessage = pendingSelectedDsps > 1 
+    ? `Evaluation submitted! ${pendingSelectedDsps - 1} more DSP${pendingSelectedDsps > 2 ? 's' : ''} to evaluate.`
+    : "All selected evaluations complete!";
 
   return (
     <div className="relative w-full min-h-screen bg-gradient-to-br from-slate-100 to-gray-200 pb-20">
@@ -389,43 +616,195 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
       
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-12">
         <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="text-sm uppercase tracking-wide text-blue-500 font-semibold">Observer form</p>
-              <h2 className="text-2xl font-bold text-gray-800">Select DSP</h2>
-              <p className="text-sm text-gray-600">Choose which DSP you are completing this form for.</p>
-            </div>
-            <div className="relative w-full md:w-72">
-              <select
-                value={selectedDsp}
-                onChange={(e) => setSelectedDsp(e.target.value)}
-                className="w-full appearance-none bg-slate-50 border border-blue-200 text-gray-800 rounded-2xl px-4 py-3 pr-10 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              >
-                {!availableDsps.length && <option value="">Select a DSP</option>}
-                {availableDsps.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-blue-500">
-                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                </svg>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-wide text-blue-500 font-semibold">Observer form</p>
+                <h2 className="text-2xl font-bold text-gray-800">Select DSPs to Evaluate</h2>
+                <p className="text-sm text-gray-600">Choose one or more DSPs you want to complete evaluations for.</p>
+              </div>
+              <div className="relative" ref={addMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddDspMenu((prev) => !prev)}
+                  className="px-4 py-3 bg-green-600 text-white font-semibold rounded-2xl shadow-sm hover:bg-green-700 transition flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add DSP
+                  <svg
+                    className={`w-4 h-4 transition-transform ${showAddDspMenu ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showAddDspMenu && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white border-2 border-blue-100 rounded-2xl shadow-xl overflow-hidden z-50">
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-gray-800">Add DSP to your list</p>
+                      <p className="text-xs text-gray-600">Assign an existing DSP to evaluate or create a new one.</p>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {addableDspOptions.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">No other DSPs available to add.</div>
+                      ) : (
+                        addableDspOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => handleAddExistingDsp(option.value)}
+                            className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center justify-between gap-2 text-gray-800"
+                          >
+                            <span className="font-medium truncate">{option.label}</span>
+                            <span className="text-xs text-gray-500 truncate max-w-[120px]">{option.value}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    <div className="border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddDspModal(true);
+                          setShowAddDspMenu(false);
+                        }}
+                        className="w-full px-4 py-3 text-left text-green-700 font-semibold hover:bg-green-50 flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create new DSP
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+            
+            {/* Multi-select dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowDspDropdown(!showDspDropdown)}
+                className="w-full flex items-center justify-between bg-slate-50 border-2 border-blue-200 text-gray-800 rounded-2xl px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+              >
+                <span className="truncate">
+                  {isLoadingDsps ? (
+                    "Loading DSPs..."
+                  ) : selectedDsps.length === 0 ? (
+                    "Click to select DSPs..."
+                  ) : (
+                    `${selectedDsps.length} DSP${selectedDsps.length > 1 ? 's' : ''} selected`
+                  )}
+                </span>
+                <svg className={`w-5 h-5 text-blue-500 transition-transform ${showDspDropdown ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                </svg>
+              </button>
+              
+              {showDspDropdown && (
+                <div className="absolute z-50 mt-2 w-full bg-white border-2 border-blue-200 rounded-2xl shadow-xl max-h-64 overflow-y-auto">
+                  <div className="sticky top-0 bg-white border-b border-gray-200 p-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={selectAllDsps}
+                      className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearAllDsps}
+                      className="flex-1 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {availableDsps.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500">
+                      No DSPs available. Click &quot;Add DSP&quot; to add one.
+                    </div>
+                  ) : (
+                    availableDsps.map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedDsps.includes(option.value)}
+                          onChange={() => toggleDspSelection(option.value)}
+                          className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-gray-800 flex-1">{option.label}</span>
+                        {submittedDsps[option.value] && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Submitted</span>
+                        )}
+                      </label>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Selected DSPs chips */}
+            {selectedDsps.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedDsps.map((dspValue) => {
+                  const label = availableDsps.find(d => d.value === dspValue)?.label || dspValue;
+                  const isSubmitted = submittedDsps[dspValue];
+                  const isActive = currentDsp === dspValue;
+                  return (
+                    <button
+                      key={dspValue}
+                      type="button"
+                      onClick={() => setCurrentDsp(dspValue)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 ${
+                        isActive 
+                          ? 'bg-blue-600 text-white shadow-md' 
+                          : isSubmitted 
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {label}
+                      {isSubmitted && (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Current DSP indicator */}
+            {currentDspLabel && (
+              <p className="text-sm text-gray-700">
+                Currently filling form for: <span className="font-semibold text-blue-600">{currentDspLabel}</span>
+                {pendingSelectedDsps > 1 && (
+                  <span className="text-gray-500 ml-2">({pendingSelectedDsps - 1} more pending)</span>
+                )}
+              </p>
+            )}
           </div>
-          {selectedDspLabel && (
-            <p className="text-sm text-gray-700 mt-4">
-              You&apos;re filling out this form for <span className="font-semibold text-gray-900">{selectedDspLabel}</span>.
-            </p>
-          )}
         </div>
 
-        {!selectedDsp ? (
+        {selectedDsps.length === 0 ? (
           <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 px-10 py-14 text-center space-y-3">
-            <h1 className="text-3xl font-bold text-gray-800">Select a DSP to begin</h1>
-            <p className="text-base text-gray-700">Choose someone from the dropdown above to start the evaluation.</p>
+            <h1 className="text-3xl font-bold text-gray-800">Select DSPs to Evaluate</h1>
+            <p className="text-base text-gray-700">Click the dropdown above to select one or more DSPs to evaluate.</p>
+          </div>
+        ) : !currentDsp ? (
+          <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 px-10 py-14 text-center space-y-3">
+            <h1 className="text-3xl font-bold text-gray-800">Click a DSP to Start</h1>
+            <p className="text-base text-gray-700">Click one of the selected DSP chips above to begin the evaluation.</p>
           </div>
         ) : isCurrentSubmitted ? (
           <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 px-10 py-14 text-center space-y-3">
@@ -1419,6 +1798,91 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
           </>
         )}
       </div>
+      
+      {/* Add DSP Modal */}
+      {showAddDspModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-800">Add New DSP</h3>
+              <button
+                onClick={() => {
+                  setShowAddDspModal(false);
+                  setNewDspName("");
+                  setNewDspEmail("");
+                  setAddDspError(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  DSP Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newDspName}
+                  onChange={(e) => setNewDspName(e.target.value)}
+                  placeholder="Enter DSP's full name"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-green-500 text-gray-700"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  DSP Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={newDspEmail}
+                  onChange={(e) => setNewDspEmail(e.target.value)}
+                  placeholder="Enter DSP's email address"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-green-500 text-gray-700"
+                />
+              </div>
+              
+              {addDspError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                  <p className="text-red-700 text-sm">{addDspError}</p>
+                </div>
+              )}
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddDspModal(false);
+                    setNewDspName("");
+                    setNewDspEmail("");
+                    setAddDspError(null);
+                  }}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddDsp}
+                  disabled={isAddingDsp}
+                  className={`flex-1 px-4 py-3 font-semibold rounded-xl transition ${
+                    isAddingDsp
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-green-600 text-white hover:bg-green-700"
+                  }`}
+                >
+                  {isAddingDsp ? "Adding..." : "Add DSP"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

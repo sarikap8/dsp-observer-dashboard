@@ -7,6 +7,18 @@ import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Polyfill ResizeObserver for jsdom environment
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  window.ResizeObserver = MockResizeObserver;
+}
+// @ts-ignore
+global.ResizeObserver = global.ResizeObserver || MockResizeObserver;
+
 // Mock Prisma client for tests
 jest.mock('./src/lib/db', () => ({
   __esModule: true,

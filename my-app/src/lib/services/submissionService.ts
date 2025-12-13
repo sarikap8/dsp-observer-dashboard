@@ -282,6 +282,105 @@ export async function getDspSubmissions(dspEmail: string) {
 }
 
 /**
+ * Add a new DSP (called by an Observer)
+ * 
+ * Creates a new DSP in the database. The observer relationship is 
+ * established when the observer submits an evaluation for this DSP.
+ */
+export async function addDsp(
+  dspEmail: string,
+  dspName: string,
+  observerEmail?: string
+): Promise<SubmissionResponse> {
+  try {
+    // Check if DSP already exists
+    const existingDsp = await prisma.dsp.findUnique({
+      where: { email: dspEmail.toLowerCase() },
+    });
+
+    if (existingDsp) {
+      return {
+        success: false,
+        message: 'A DSP with this email already exists',
+        error: 'DUPLICATE_EMAIL',
+      };
+    }
+
+    // Create the new DSP
+    const dsp = await prisma.dsp.create({
+      data: {
+        email: dspEmail.toLowerCase(),
+        name: dspName,
+      },
+    });
+
+    // If observer email is provided, ensure observer exists
+    if (observerEmail) {
+      const observer = await prisma.observer.findUnique({
+        where: { email: observerEmail.toLowerCase() },
+      });
+
+      if (!observer) {
+        // Create the observer if they don't exist
+        await prisma.observer.create({
+          data: {
+            email: observerEmail.toLowerCase(),
+            name: 'Observer', // Default name, will be updated on first submission
+          },
+        });
+      }
+    }
+
+    return {
+      success: true,
+      message: 'DSP added successfully',
+      data: {
+        dspId: dsp.id,
+        email: dsp.email,
+        name: dsp.name,
+      },
+    };
+  } catch (error) {
+    console.error('Error adding DSP:', error);
+    return {
+      success: false,
+      message: 'Failed to add DSP',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Get all DSPs in the system
+ */
+export async function getAllDsps() {
+  try {
+    const dsps = await prisma.dsp.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'DSPs retrieved successfully',
+      data: dsps,
+    };
+  } catch (error) {
+    console.error('Error fetching DSPs:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch DSPs',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Get all submissions made by a specific observer
  */
 export async function getObserverSubmissions(observerEmail: string) {
