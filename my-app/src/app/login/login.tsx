@@ -5,52 +5,15 @@ import "./login.css";
 import { GoogleSignInButton } from "../../../components/GoogleSignInButton";
 import {GoogleLogin} from '@react-oauth/google';
 import {useRouter} from 'next/navigation';
-import { findUserByEmail, setActiveUser } from "../form/userDirectory";
 
 export default function Login() {
-  const router = useRouter();
-
-  const decodeEmailFromCredential = (credential?: string | null) => {
-    if (!credential) return null;
-    try {
-      const payload = JSON.parse(atob(credential.split('.')[1]));
-      return (payload?.email as string | undefined) ?? null;
-    } catch (error) {
-      console.warn("Unable to decode credential", error);
-      return null;
-    }
-  };
-
   const handleGoogleSignIn = async () => {
     // TODO: Implement Google OAuth authentication
     // Example: Redirect to Google OAuth or use a library like next-auth
     // window.location.href = '/api/auth/google';
     console.log("Google sign-in clicked");
   };
-
-  const handleLoginSuccess = (credentialResponse: any) => {
-    const email = decodeEmailFromCredential(credentialResponse?.credential);
-    const directoryEntry = findUserByEmail(email);
-
-    if (!directoryEntry) {
-      alert("This test login email is not recognized in the directory. Use arjun.mathu2005@gmail.com (observer) or j1212steven@gmail.com (DSP).");
-      return;
-    }
-
-    const activeUser = {
-      email: email!,
-      name: directoryEntry.name,
-      role: directoryEntry.role,
-    };
-
-    setActiveUser(activeUser);
-
-    if (directoryEntry.role === "observer") {
-      router.push('/form/observer');
-    } else {
-      router.push('/form');
-    }
-  };
+  const router = useRouter();
 
   return (
     <>
@@ -84,7 +47,10 @@ export default function Login() {
         </div>
         <div className="flex justify-center items-center google-login-wrapper" style={{ width: '100%', marginTop: '2vh' }}>
           <GoogleLogin 
-            onSuccess={handleLoginSuccess} 
+            onSuccess={() => {
+              console.log("login success");
+              router.push('/form');
+            }} 
             onError={() => console.log("login error")}
           />
           {/* <GoogleSignInButton 
