@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, AlertCircle, User } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image'; 
+import { usePathname } from 'next/navigation';
+
 
 type Volunteer = {
   id: number;
@@ -15,6 +19,8 @@ type Volunteer = {
   lastReview: string;
 };
 
+
+
 const VolunteerDashboard = () => {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +28,7 @@ const VolunteerDashboard = () => {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const pathname = usePathname();
 
   const departments = ['all', 'Community Outreach', 'Development', 'Education'];
     // Fetch volunteers from backend
@@ -69,20 +76,30 @@ const VolunteerDashboard = () => {
   );
 
   const pendingReviews = 4;
-
+  
   return (
-    <div className="min-h-screen bg-[#ffffff] p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-5">
-          <h1 className="text-3xl font-bold text-[#041e42] mb-2"> 
-            DSP Performance Dashboard
-          </h1>
-          <p className="text-gray-600">
-           
-          </p>
-        </div>
-
+    <div className="min-h-screen bg-[#041e42]">
+      {/* Full-width white header bar at the very top */}
+      <div className="w-full bg-white flex items-center py-6 px-8 relative">
+        {/* Logo on the left */}
+        <Link href="/">
+          <div className="w-16 lg:w-20">
+            <Image
+              src="/next-for-autism-logo.svg" 
+              alt="Next for Autism Logo" 
+              width={160}
+              height={80}
+              className="object-contain cursor-pointer w-full h-auto"
+            />
+          </div>
+        </Link>
+        
+        {/* Title centered */}
+        <h1 className="text-4xl font-bold text-[#041e42] absolute left-1/2 -translate-x-1/2"> 
+          DSP Performance Dashboard
+        </h1>
+      </div>
+      <div className="max-w-7xl mx-auto p-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
