@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, FileText, AlertCircle, User } from 'lucide-react';
+import { Search, FileText, AlertCircle, User } from 'lucide-react';
 
 type Volunteer = {
   id: number;
@@ -19,9 +19,9 @@ const VolunteerDashboard = () => {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
-  const [volunteers, setVolunteers] = useState([]);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const departments = ['all', 'Community Outreach', 'Development', 'Education'];
     // Fetch volunteers from backend
@@ -40,7 +40,7 @@ const VolunteerDashboard = () => {
           setVolunteers(data);
           setError(null);
         } catch (err) {
-          setError(err.message);
+          setError(err instanceof Error ? err.message : 'An unknown error occurred');
           console.error('Error fetching volunteers:', err);
         } finally {
           setLoading(false);
