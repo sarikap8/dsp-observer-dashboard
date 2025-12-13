@@ -324,7 +324,7 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
     }
   }, [selectedDsps, currentDsp]);
 
-  const sectionRefs: Record<keyof typeof expandedSections, RefObject<HTMLDivElement>> = {
+  const sectionRefs: Record<keyof typeof expandedSections, RefObject<HTMLDivElement | null>> = {
     choice: choiceHeaderRef,
     belonging: belongingHeaderRef,
     lifelongLearning: lifelongHeaderRef,
@@ -440,7 +440,7 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
     }
   }, [healthyLivingComplete]);
 
-  const followHeaderDuringClose = (ref: RefObject<HTMLDivElement>, duration = 620) => {
+  const followHeaderDuringClose = (ref: RefObject<HTMLDivElement | null>, duration = 620) => {
     if (!ref.current) return;
     const offsetTop = () =>
       ref.current ? ref.current.getBoundingClientRect().top + window.scrollY - 90 : window.scrollY;
@@ -807,9 +807,29 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
             <p className="text-base text-gray-700">Click one of the selected DSP chips above to begin the evaluation.</p>
           </div>
         ) : isCurrentSubmitted ? (
-          <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 px-10 py-14 text-center space-y-3">
+          <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 px-10 py-14 text-center space-y-6">
             <h1 className="text-4xl font-bold text-gray-800">Done!</h1>
             <p className="text-lg text-gray-700">{completionMessage}</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {otherPending > 0 ? (
+                <button
+                  onClick={() => {
+                    // Find next unsubmitted DSP
+                    const nextDsp = availableDsps.find(opt => !submittedDsps[opt.value]);
+                    if (nextDsp) setSelectedDsp(nextDsp.value);
+                  }}
+                  className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md transition-colors"
+                >
+                  Continue to Next DSP
+                </button>
+              ) : null}
+              <button
+                onClick={() => router.push('/comparison')}
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-colors"
+              >
+                View Comparison Dashboard
+              </button>
+            </div>
           </div>
         ) : (
           <>

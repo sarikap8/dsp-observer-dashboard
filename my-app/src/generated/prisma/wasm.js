@@ -197,7 +197,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/elopez/Desktop/mentored-cs-fa25/dsp-observer-dashboard/my-app/src/generated/prisma",
+      "value": "/Users/sarikapasumarthy/Desktop/dsp-observer-dashboard/my-app/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -211,7 +211,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/elopez/Desktop/mentored-cs-fa25/dsp-observer-dashboard/my-app/prisma/schema.prisma",
+    "sourceFilePath": "/Users/sarikapasumarthy/Desktop/dsp-observer-dashboard/my-app/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
