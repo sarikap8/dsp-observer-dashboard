@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, ReactNode, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { RefObject } from "react";
 import { getActiveUser } from "./userDirectory";
+import { submitDspSelfEvaluation } from "@/lib/api";
 
 type AnimatedSectionProps = {
   isOpen: boolean;
@@ -114,6 +115,9 @@ export default function FormPage() {
     personalHygieneEducation: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [activeUser, setActiveUserState] = useState<{ email: string; name: string } | null>(null);
 
   useEffect(() => {
     const active = getActiveUser();
@@ -124,7 +128,10 @@ export default function FormPage() {
 
     if (active.role !== "dsp") {
       router.replace("/form/observer");
+      return;
     }
+    
+    setActiveUserState({ email: active.email, name: active.name });
   }, [router]);
 
   const [expandedSections, setExpandedSections] = useState({
@@ -259,8 +266,33 @@ export default function FormPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    if (!activeUser) {
+      setSubmitError("User session not found. Please log in again.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setSubmitError(null);
+    
+    try {
+      const result = await submitDspSelfEvaluation(
+        activeUser.email,
+        activeUser.name,
+        formData
+      );
+      
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        setSubmitError(result.message || "Failed to submit evaluation");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      setSubmitError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Count completed fields for summary
@@ -1265,13 +1297,33 @@ export default function FormPage() {
             </>
           </AnimatedSection>
         </div>
+        {submitError && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4">
+            <p className="text-red-700 font-medium">{submitError}</p>
+          </div>
+        )}
         <div className="flex justify-end mt-4">
           <button
             type="button"
             onClick={handleSubmit}
-            className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition"
+            disabled={isSubmitting}
+            className={`inline-flex items-center justify-center px-6 py-3 rounded-2xl text-white font-semibold shadow-md transition ${
+              isSubmitting 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            Submit
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </div>
