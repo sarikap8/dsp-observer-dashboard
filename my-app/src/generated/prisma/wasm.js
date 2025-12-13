@@ -197,7 +197,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/sarikapasumarthy/Desktop/dsp-observer-dashboard/my-app/src/generated/prisma",
+      "value": "C:\\Users\\1evel\\OneDrive\\Desktop\\dsp-observer-dashboard\\my-app\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -206,12 +206,12 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "darwin-arm64",
+        "value": "windows",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/sarikapasumarthy/Desktop/dsp-observer-dashboard/my-app/prisma/schema.prisma",
+    "sourceFilePath": "C:\\Users\\1evel\\OneDrive\\Desktop\\dsp-observer-dashboard\\my-app\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -225,6 +225,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
