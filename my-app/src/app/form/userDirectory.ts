@@ -26,13 +26,19 @@ export const DSP_DIRECTORY: Record<string, DspOption & { email?: string; observe
     email: "eduardo_lopez@berkeley.edu",
     observerEmail: "arjun.mathu2005@gmail.com",
   },
+  "sarika-pasumarthy": {
+    value: "sarika-pasumarthy",
+    label: "Sarika Pasumarthy",
+    email: "sarikapasumarthy@berkeley.edu",
+    observerEmail: "sarikakutty@gmail.com",
+  },
 };
 
 export const USER_DIRECTORY: Record<string, UserDirectoryEntry> = {
   "arjun.mathu2005@gmail.com": {
     role: "observer",
     name: "Arjun Mathu",
-    dspIds: ["john-steven", "eduardo-lopez"],
+    dspIds: ["john-steven", "eduardo-lopez", "sarika-pasumarthy"],
   },
   "j1212steven@gmail.com": {
     role: "dsp",
@@ -62,8 +68,19 @@ export const USER_DIRECTORY: Record<string, UserDirectoryEntry> = {
   "gokuflys@gmail.com": {
     role: "observer",
     name: "Edward",
-    dspIds: ["john-steven", "eduardo-lopez"],
-  }
+    dspIds: ["john-steven", "eduardo-lopez", "sarika-pasumarthy"],
+  },
+  "sarikapasumarthy@berkeley.edu": {
+    role: "dsp",
+    name: "Sarika Pasumarthy",
+    dspId: "sarika-pasumarthy",
+    observerEmail: "sarikakutty@gmail.com",
+  },
+  "sarikakutty@gmail.com": {
+    role: "observer",
+    name: "Sarika Kutty",
+    dspIds: ["sarika-pasumarthy"],
+  },
 };
 
 export type ActiveUser = {

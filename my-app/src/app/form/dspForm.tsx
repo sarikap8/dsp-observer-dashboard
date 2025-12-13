@@ -171,7 +171,7 @@ export default function FormPage() {
     "exerciseActivities", "mentalHealthActivities", "healthyHabitsTrainings", "personalHygieneEducation"
   ];
 
-  const sectionRefs: Record<keyof typeof expandedSections, RefObject<HTMLDivElement>> = {
+  const sectionRefs: Record<keyof typeof expandedSections, RefObject<HTMLDivElement | null>> = {
     choice: choiceHeaderRef,
     belonging: belongingHeaderRef,
     lifelongLearning: lifelongHeaderRef,
@@ -236,7 +236,7 @@ export default function FormPage() {
     }
   }, [healthyLivingComplete]);
 
-  const followHeaderDuringClose = (ref: RefObject<HTMLDivElement>, duration = 620) => {
+  const followHeaderDuringClose = (ref: RefObject<HTMLDivElement | null>, duration = 620) => {
     if (!ref.current) return;
     const offsetTop = () =>
       ref.current ? ref.current.getBoundingClientRect().top + window.scrollY - 90 : window.scrollY;
@@ -322,9 +322,15 @@ export default function FormPage() {
           />
         </div>
         <div className="flex-1 flex items-center justify-center px-6">
-          <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 px-10 py-14 text-center space-y-3">
+          <div className="bg-white rounded-3xl shadow-xl border-2 border-blue-100 px-10 py-14 text-center space-y-6">
             <h1 className="text-4xl font-bold text-gray-800">Done!</h1>
-            <p className="text-lg text-gray-700">Thanks for submitting</p>
+            <p className="text-lg text-gray-700">Thanks for submitting your evaluation</p>
+            <button
+              onClick={() => router.push('/comparison')}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-colors"
+            >
+              View Comparison Dashboard
+            </button>
           </div>
         </div>
       </div>
