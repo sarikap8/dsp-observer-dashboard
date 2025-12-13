@@ -9,15 +9,17 @@ This guide is for developers who are new to full-stack development. It explains 
 ## 📍 Where We Started (feat/observerFormPage branch)
 
 The original app had:
+
 - ✅ A beautiful login page with Google OAuth
 - ✅ Two form pages (DSP form and Observer form)
 - ✅ 33 questions organized into sections
 - ❌ **No database** — clicking "Submit" just showed "Done!" but didn't save anything
 
 ### Original Submit Code
+
 ```typescript
 const handleSubmit = () => {
-  setSubmitted(true);  // Just shows a "Done!" message
+  setSubmitted(true); // Just shows a "Done!" message
 };
 ```
 
@@ -61,43 +63,44 @@ Here's every file we added and what it does:
 
 ### Database Layer
 
-| File | Purpose |
-|------|---------|
+| File                   | Purpose                                         |
+| ---------------------- | ----------------------------------------------- |
 | `prisma/schema.prisma` | Defines your database tables (like a blueprint) |
-| `prisma/schema.sql` | Raw SQL version (for reference only) |
-| `prisma/seed.ts` | Script to add test data to your database |
-| `src/lib/db.ts` | Creates a connection to the database |
+| `prisma/schema.sql`    | Raw SQL version (for reference only)            |
+| `prisma/seed.ts`       | Script to add test data to your database        |
+| `src/lib/db.ts`        | Creates a connection to the database            |
 
 ### API Layer
 
-| File | Purpose |
-|------|---------|
+| File                                        | Purpose                           |
+| ------------------------------------------- | --------------------------------- |
 | `src/app/api/submissions/observer/route.ts` | Handles Observer form submissions |
-| `src/app/api/submissions/dsp/route.ts` | Handles DSP form submissions |
+| `src/app/api/submissions/dsp/route.ts`      | Handles DSP form submissions      |
 
 ### Service Layer (Business Logic)
 
-| File | Purpose |
-|------|---------|
+| File                                    | Purpose                                                |
+| --------------------------------------- | ------------------------------------------------------ |
 | `src/lib/services/submissionService.ts` | Contains all the logic for saving/updating submissions |
-| `src/lib/types.ts` | TypeScript types for our data |
-| `src/lib/validation.ts` | Validates form data before saving |
-| `src/lib/api.ts` | Frontend functions to call the API |
+| `src/lib/types.ts`                      | TypeScript types for our data                          |
+| `src/lib/validation.ts`                 | Validates form data before saving                      |
+| `src/lib/api.ts`                        | Frontend functions to call the API                     |
 
 ### Testing
 
-| File | Purpose |
-|------|---------|
-| `src/__tests__/lib/validation.test.ts` | Tests for validation utilities |
-| `src/__tests__/lib/submissionService.test.ts` | Tests for business logic |
-| `src/__tests__/api/observer.test.ts` | Tests for Observer API |
-| `src/__tests__/api/dsp.test.ts` | Tests for DSP API |
+| File                                          | Purpose                        |
+| --------------------------------------------- | ------------------------------ |
+| `src/__tests__/lib/validation.test.ts`        | Tests for validation utilities |
+| `src/__tests__/lib/submissionService.test.ts` | Tests for business logic       |
+| `src/__tests__/api/observer.test.ts`          | Tests for Observer API         |
+| `src/__tests__/api/dsp.test.ts`               | Tests for DSP API              |
 
 ---
 
 ## 🗄️ Understanding the Database
 
 ### What is Prisma?
+
 Prisma is an **ORM (Object-Relational Mapper)**. Instead of writing SQL, you write TypeScript code and Prisma converts it to SQL for you.
 
 ### Our Database Tables
@@ -133,6 +136,7 @@ We have 5 tables:
 ## 🔌 Understanding API Routes
 
 ### What is an API?
+
 An **API (Application Programming Interface)** is how your frontend talks to your backend. It's like a waiter at a restaurant — you tell the waiter what you want, they go to the kitchen, and bring back your food.
 
 ### How Next.js API Routes Work
@@ -156,15 +160,19 @@ src/app/api/
 export async function POST(request: NextRequest) {
   // 1. Get the data from the request
   const body = await request.json();
-  
+
   // 2. Validate it
   if (!body.dspEmail) {
-    return NextResponse.json({ error: 'Email required' }, { status: 400 });
+    return NextResponse.json({ error: "Email required" }, { status: 400 });
   }
-  
+
   // 3. Save to database
-  const result = await submitDspSelfEvaluation(body.dspEmail, body.dspName, body.answers);
-  
+  const result = await submitDspSelfEvaluation(
+    body.dspEmail,
+    body.dspName,
+    body.answers
+  );
+
   // 4. Return the result
   return NextResponse.json(result);
 }
@@ -175,20 +183,22 @@ export async function POST(request: NextRequest) {
 ## 📝 Understanding Form-to-Database Mapping
 
 ### The Problem
+
 Our form has fields like `privacyKnock`, `clothingChoice`, etc.
 Our database has columns like `q1`, `q2`, `q3`, etc.
 
 ### The Solution
+
 We created a mapping in `validation.ts`:
 
 ```typescript
 const FORM_FIELD_ORDER = [
-  'privacyKnock',        // → q1
-  'privacyHandsOn',      // → q2
-  'privacyEducation',    // → q3
-  'clothingChoice',      // → q4
+  "privacyKnock", // → q1
+  "privacyHandsOn", // → q2
+  "privacyEducation", // → q3
+  "clothingChoice", // → q4
   // ... 29 more fields
-  'personalHygieneEducation',  // → q33
+  "personalHygieneEducation", // → q33
 ];
 ```
 
@@ -211,6 +221,7 @@ function letterToScore(letter) {
 Here's what happens when a DSP clicks "Submit":
 
 ### Step 1: Frontend Collects Form Data
+
 ```typescript
 // dspForm.tsx
 const formData = {
@@ -221,16 +232,14 @@ const formData = {
 ```
 
 ### Step 2: Frontend Calls the API
+
 ```typescript
 // lib/api.ts
-const result = await submitDspSelfEvaluation(
-  userEmail,
-  userName,
-  formData
-);
+const result = await submitDspSelfEvaluation(userEmail, userName, formData);
 ```
 
 ### Step 3: API Route Receives Request
+
 ```typescript
 // api/submissions/dsp/route.ts
 export async function POST(request) {
@@ -240,6 +249,7 @@ export async function POST(request) {
 ```
 
 ### Step 4: Service Layer Saves to Database
+
 ```typescript
 // lib/services/submissionService.ts
 await prisma.$transaction(async (tx) => {
@@ -248,12 +258,12 @@ await prisma.$transaction(async (tx) => {
   if (!dsp) {
     dsp = await tx.dsp.create({ data: { email, name } });
   }
-  
+
   // 2. Create question response
   const response = await tx.questionResponse.create({
     data: { q1: 5, q2: 4, q3: 3, ... }
   });
-  
+
   // 3. Link them together
   await tx.dspSubmission.create({
     data: { dspId: dsp.id, questionResponseId: response.id }
@@ -262,9 +272,10 @@ await prisma.$transaction(async (tx) => {
 ```
 
 ### Step 5: Frontend Shows Success
+
 ```typescript
 if (result.success) {
-  setSubmitted(true);  // Show "Done!" screen
+  setSubmitted(true); // Show "Done!" screen
 }
 ```
 
@@ -279,14 +290,14 @@ A key requirement was: **If someone submits again, UPDATE instead of creating a 
 ```typescript
 // Check if submission already exists
 const existingSubmission = await tx.dspSubmission.findUnique({
-  where: { dspId: dsp.id }
+  where: { dspId: dsp.id },
 });
 
 if (existingSubmission) {
   // UPDATE the existing question response
   await tx.questionResponse.update({
     where: { id: existingSubmission.questionResponseId },
-    data: newAnswers
+    data: newAnswers,
   });
 } else {
   // CREATE new records
@@ -301,6 +312,7 @@ if (existingSubmission) {
 We use **Jest** for testing. Tests ensure our code works correctly.
 
 ### Run All Tests
+
 ```bash
 npm test
 ```
@@ -312,18 +324,21 @@ npm test
 3. **API Responses**: Does missing email return a 400 error?
 
 ### Example Test
+
 ```typescript
 it('should convert "a" to score 5', () => {
-  expect(letterToScore('a')).toBe(5);
+  expect(letterToScore("a")).toBe(5);
 });
 
-it('should update existing submission instead of creating new', async () => {
+it("should update existing submission instead of creating new", async () => {
   // First submission
-  await submitDspSelfEvaluation('test@email.com', 'Test', { q1: 3 });
-  
+  await submitDspSelfEvaluation("test@email.com", "Test", { q1: 3 });
+
   // Second submission (should UPDATE, not CREATE)
-  const result = await submitDspSelfEvaluation('test@email.com', 'Test', { q1: 5 });
-  
+  const result = await submitDspSelfEvaluation("test@email.com", "Test", {
+    q1: 5,
+  });
+
   expect(result.data.isUpdate).toBe(true);
 });
 ```
@@ -333,6 +348,7 @@ it('should update existing submission instead of creating new', async () => {
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 1. Node.js installed
 2. PostgreSQL installed (via Docker or Homebrew)
 
@@ -377,15 +393,19 @@ If you want to understand this codebase better, learn about:
 ## 🆘 Common Issues
 
 ### "User was denied access on the database"
+
 Your `DATABASE_URL` is wrong. Check your username:
+
 ```bash
 psql -d dsp_observer_db -c "\du"
 ```
 
 ### "This email is not recognized in the directory"
+
 Add your email to `src/app/form/userDirectory.ts`
 
 ### Form submits but data doesn't appear
+
 1. Check browser console for errors (F12)
 2. Make sure the database is running
 3. Make sure you ran `npm run db:migrate`
@@ -403,4 +423,3 @@ You now understand how a full-stack form application works! The key takeaways:
 5. **Tests** make sure everything works correctly
 
 Good luck with your development! 🚀
-
