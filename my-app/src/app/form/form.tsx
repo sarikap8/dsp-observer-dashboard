@@ -1131,6 +1131,27 @@ export default function FormPage() {
           </div>
           )}
         </div>
+
+        {/* Submit Button */}
+        <div className="flex justify-center pt-8">
+          <button
+            type="button"
+            onClick={() => {
+              // Check if all sections are complete
+              const allComplete = choiceComplete && belongingComplete && lifelongLearningComplete && healthyLivingComplete;
+              if (!allComplete) {
+                alert("Please complete all sections before submitting.");
+                return;
+              }
+              // TODO: Add actual submission logic here
+              console.log("Form submitted:", formData);
+              alert("Form submitted successfully!");
+            }}
+            className="px-12 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xl font-bold rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+          >
+            Submit Evaluation
+          </button>
+        </div>
           </div>
         </div>
   );
