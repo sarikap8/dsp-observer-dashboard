@@ -2,9 +2,18 @@
 
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
+import { submitDspSelfEvaluation } from "@/lib/api";
 
 
 export default function FormPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  // User info - in a real app this would come from auth context
+  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
+  
   const [formData, setFormData] = useState({
     // Human Rights / Disability Rights
     privacyKnock: "",
@@ -1132,24 +1141,102 @@ export default function FormPage() {
           )}
         </div>
 
+        {/* User Info Section */}
+        <div className="bg-white rounded-3xl shadow-xl border-2 border-gray-200 p-10">
+          <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b-2 border-gray-200 pb-3">
+            Your Information
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-700"
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your Email</label>
+              <input
+                type="email"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-700"
+                placeholder="Enter your email"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Submit Button */}
-        <div className="flex justify-center pt-8">
+        <div className="flex flex-col items-center pt-8 gap-4">
+          {submitError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-3 rounded-lg">
+              {submitError}
+            </div>
+          )}
+          {submitSuccess && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded-lg">
+              ✅ Form submitted successfully and saved to database!
+            </div>
+          )}
           <button
             type="button"
-            onClick={() => {
+            disabled={isSubmitting}
+            onClick={async () => {
+              setSubmitError(null);
+              setSubmitSuccess(false);
+              
+              // Validate user info
+              if (!userName.trim()) {
+                setSubmitError("Please enter your name.");
+                return;
+              }
+              if (!userEmail.trim()) {
+                setSubmitError("Please enter your email.");
+                return;
+              }
+              
               // Check if all sections are complete
               const allComplete = choiceComplete && belongingComplete && lifelongLearningComplete && healthyLivingComplete;
               if (!allComplete) {
-                alert("Please complete all sections before submitting.");
+                setSubmitError("Please complete all sections before submitting.");
                 return;
               }
-              // TODO: Add actual submission logic here
-              console.log("Form submitted:", formData);
-              alert("Form submitted successfully!");
+              
+              setIsSubmitting(true);
+              
+              try {
+                // Submit to database via API
+                const result = await submitDspSelfEvaluation(
+                  userEmail.trim(),
+                  userName.trim(),
+                  formData
+                );
+                
+                if (result.success) {
+                  setSubmitSuccess(true);
+                  console.log("Form submitted successfully:", result);
+                } else {
+                  setSubmitError(result.message || "Failed to submit form. Please try again.");
+                  console.error("Submission failed:", result);
+                }
+              } catch (error) {
+                console.error("Error submitting form:", error);
+                setSubmitError("An unexpected error occurred. Please try again.");
+              } finally {
+                setIsSubmitting(false);
+              }
             }}
-            className="px-12 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xl font-bold rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+            className={`px-12 py-4 text-white text-xl font-bold rounded-2xl shadow-lg transform transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300 ${
+              isSubmitting 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:scale-105'
+            }`}
           >
-            Submit Evaluation
+            {isSubmitting ? 'Submitting...' : 'Submit Evaluation'}
           </button>
         </div>
           </div>
