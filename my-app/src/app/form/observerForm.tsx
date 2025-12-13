@@ -170,7 +170,12 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
     "exerciseActivities", "mentalHealthActivities", "healthyHabitsTrainings", "personalHygieneEducation"
   ];
 
+  // Initialize user and DSP options only once on mount
+  const [initialized, setInitialized] = useState(false);
+  
   useEffect(() => {
+    if (initialized) return;
+    
     const active = getActiveUser();
     if (!active) {
       router.replace("/");
@@ -188,25 +193,13 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
     if (directoryOptions.length) {
       setAvailableDsps(directoryOptions);
       setSelectedDsp(directoryOptions[0]?.value || "");
-      return;
-    }
-
-    if (dspOptions.length) {
+    } else if (dspOptions.length) {
       setAvailableDsps(dspOptions);
       setSelectedDsp(dspOptions[0].value);
     }
-  }, [router, dspOptions]);
-
-  useEffect(() => {
-    if (!availableDsps.length) {
-      setSelectedDsp("");
-      return;
-    }
-
-    if (!availableDsps.some(option => option.value === selectedDsp)) {
-      setSelectedDsp(availableDsps[0].value);
-    }
-  }, [availableDsps, selectedDsp]);
+    
+    setInitialized(true);
+  }, [initialized, router, dspOptions]);
 
   useEffect(() => {
     if (!selectedDsp) return;

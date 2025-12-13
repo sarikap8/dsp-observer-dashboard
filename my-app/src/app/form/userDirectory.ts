@@ -59,6 +59,11 @@ export const USER_DIRECTORY: Record<string, UserDirectoryEntry> = {
     dspId: "eduardo-lopez",
     observerEmail: "arjun.mathu2005@gmail.com",
   },
+  "gokuflys@gmail.com": {
+    role: "observer",
+    name: "Edward",
+    dspIds: ["john-steven", "eduardo-lopez"],
+  }
 };
 
 export type ActiveUser = {
