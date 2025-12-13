@@ -20,18 +20,43 @@ export const DSP_DIRECTORY: Record<string, DspOption & { email?: string; observe
     email: "j1212steven@gmail.com",
     observerEmail: "arjun.mathu2005@gmail.com",
   },
+  "eduardo-lopez": {
+    value: "eduardo-lopez",
+    label: "Eduardo Lopez",
+    email: "eduardo_lopez@berkeley.edu",
+    observerEmail: "arjun.mathu2005@gmail.com",
+  },
 };
 
 export const USER_DIRECTORY: Record<string, UserDirectoryEntry> = {
   "arjun.mathu2005@gmail.com": {
     role: "observer",
     name: "Arjun Mathu",
-    dspIds: ["john-steven"],
+    dspIds: ["john-steven", "eduardo-lopez"],
   },
   "j1212steven@gmail.com": {
     role: "dsp",
     name: "John Steven",
     dspId: "john-steven",
+    observerEmail: "arjun.mathu2005@gmail.com",
+  },
+  // Add multiple email variations to catch your actual Google email
+  "eduardo_lopez@berkeley.edu": {
+    role: "dsp",
+    name: "Eduardo Lopez",
+    dspId: "eduardo-lopez",
+    observerEmail: "arjun.mathu2005@gmail.com",
+  },
+  "eduardo_lopez@berkeley.com": {
+    role: "dsp",
+    name: "Eduardo Lopez",
+    dspId: "eduardo-lopez",
+    observerEmail: "arjun.mathu2005@gmail.com",
+  },
+  "elopez@berkeley.edu": {
+    role: "dsp",
+    name: "Eduardo Lopez",
+    dspId: "eduardo-lopez",
     observerEmail: "arjun.mathu2005@gmail.com",
   },
 };
