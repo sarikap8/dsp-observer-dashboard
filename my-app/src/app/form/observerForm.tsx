@@ -811,12 +811,12 @@ export default function FormPage({ dspOptions = [] }: FormPageProps) {
             <h1 className="text-4xl font-bold text-gray-800">Done!</h1>
             <p className="text-lg text-gray-700">{completionMessage}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {otherPending > 0 ? (
+              {pendingSelectedDsps > 1 ? (
                 <button
                   onClick={() => {
-                    // Find next unsubmitted DSP
-                    const nextDsp = availableDsps.find(opt => !submittedDsps[opt.value]);
-                    if (nextDsp) setSelectedDsp(nextDsp.value);
+                    // Find next unsubmitted DSP from selected DSPs
+                    const nextDsp = selectedDsps.find(dspValue => !submittedDsps[dspValue]);
+                    if (nextDsp) setCurrentDsp(nextDsp);
                   }}
                   className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md transition-colors"
                 >
