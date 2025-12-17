@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-interface VolunteerType {
+interface DspType {
   id: number;
   name: string;
   role: string;
@@ -14,8 +14,8 @@ interface VolunteerType {
   lastReview: string;
 }
 
-const Volunteer = ({ selectedVolunteer }: { selectedVolunteer: VolunteerType }) => {
-  if (!selectedVolunteer) return null;
+const Dsp = ({ selectedDsp }: { selectedDsp: DspType }) => {
+  if (!selectedDsp) return null;
 
   return (
     <div className="space-y-4">
@@ -25,11 +25,11 @@ const Volunteer = ({ selectedVolunteer }: { selectedVolunteer: VolunteerType }) 
       ======================== */}
       <div className="bg-gray-50 rounded-lg p-4">
         <h3 className="font-semibold text-gray-900 mb-3">
-          Self-Reviews ({selectedVolunteer.selfReviews})
+          Self-Reviews ({selectedDsp.selfReviews})
         </h3>
 
         <div className="space-y-2">
-          {[...Array(selectedVolunteer.selfReviews)].map((_, i) => (
+          {[...Array(selectedDsp.selfReviews)].map((_, i) => (
             <div
               key={i}
               className="bg-white p-3 rounded border border-gray-200"
@@ -50,11 +50,11 @@ const Volunteer = ({ selectedVolunteer }: { selectedVolunteer: VolunteerType }) 
       ======================== */}
       <div className="bg-gray-50 rounded-lg p-4">
         <h3 className="font-semibold text-gray-900 mb-3">
-          Observer Feedback ({selectedVolunteer.observerReviews})
+          Observer Feedback ({selectedDsp.observerReviews})
         </h3>
 
         <div className="space-y-2">
-          {[...Array(selectedVolunteer.observerReviews)].map((_, i) => (
+          {[...Array(selectedDsp.observerReviews)].map((_, i) => (
             <div
               key={i}
               className="bg-white p-3 rounded border border-gray-200"
@@ -74,4 +74,4 @@ const Volunteer = ({ selectedVolunteer }: { selectedVolunteer: VolunteerType }) 
   );
 };
 
-export default Volunteer;
+export default Dsp;

@@ -1,5 +1,5 @@
-import VolunteerDashboard from './VolunteerDashboard';
+import DspDashboard from './DspDashboard';
 
 export default function ComparisonPage() {
-  return <VolunteerDashboard />;
+  return <DspDashboard />;
 }
