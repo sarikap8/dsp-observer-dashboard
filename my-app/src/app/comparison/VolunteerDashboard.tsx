@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Star, User, Mail } from 'lucide-react';
+import { Search, Star, User, Mail, FileText } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image'; 
 import { useRouter } from 'next/navigation';
@@ -116,6 +116,20 @@ const SECTIONS = [
   { name: "HEALTHY LIVING", questions: ["q27", "q28", "q29", "q30", "q31", "q32", "q33"], color: "border-teal-400", bg: "bg-teal-50" },
 ];
 
+// PDF resource mapping for low-rated questions (supports multiple PDFs per question)
+const QUESTION_PDF_RESOURCES: Record<string, { url: string; label: string }[]> = {
+  q4: [{ url: "/pdfsforresources/Question4.pdf", label: "Resource" }],
+  q7: [{ url: "/pdfsforresources/Question7&8.pdf", label: "Resource" }],
+  q8: [{ url: "/pdfsforresources/Question8.pdf", label: "Resource" }],
+  q9: [
+    { url: "/pdfsforresources/Question9.pdf", label: "Resource" },
+    { url: "/pdfsforresources/Question9+.pdf", label: "Resource+" },
+  ],
+  q10: [{ url: "/pdfsforresources/Question10.pdf", label: "Resource" }],
+  q11: [{ url: "/pdfsforresources/Question11.pdf", label: "Resource" }],
+  q12: [{ url: "/pdfsforresources/Question12.pdf", label: "Resource" }],
+};
+
 const StarRating = ({ value, maxStars = 5 }: { value: number | null; maxStars?: number }) => {
   if (value === null) return <span className="text-gray-400 text-sm">—</span>;
   
@@ -134,17 +148,39 @@ const StarRating = ({ value, maxStars = 5 }: { value: number | null; maxStars?: 
 const ComparisonRow = ({ 
   label, 
   selfValue, 
-  observerValue 
+  observerValue,
+  questionKey,
 }: { 
   label: string; 
   selfValue: number | null; 
   observerValue: number | null;
+  questionKey: string;
 }) => {
   const diff = selfValue !== null && observerValue !== null ? selfValue - observerValue : null;
   
+  // Check if either rating is below 3 and there's a PDF resource available
+  const isLowRating = (selfValue !== null && selfValue < 3) || (observerValue !== null && observerValue < 3);
+  const pdfResources = QUESTION_PDF_RESOURCES[questionKey];
+  const showPdfLinks = isLowRating && pdfResources && pdfResources.length > 0;
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2 border-b border-gray-100 items-center hover:bg-gray-50 w-full">
-      <div className="text-sm text-gray-700 break-words min-w-0">{label}</div>
+      <div className="text-sm text-gray-700 break-words min-w-0">
+        <span>{label}</span>
+        {showPdfLinks && pdfResources.map((resource, index) => (
+          <a
+            key={index}
+            href={resource.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-md hover:bg-red-200 transition-colors"
+            title="View resource for improvement"
+          >
+            <FileText className="w-3 h-3" />
+            {resource.label}
+          </a>
+        ))}
+      </div>
       <div className="flex justify-center min-w-0">
         <StarRating value={selfValue} />
       </div>
@@ -562,6 +598,7 @@ const ComparisonContent = ({
                 label={QUESTION_LABELS[qKey]}
                 selfValue={selfResponse?.[qKey as keyof QuestionResponse] ?? null}
                 observerValue={observerResponse?.[qKey as keyof QuestionResponse] ?? null}
+                questionKey={qKey}
               />
             ))}
           </div>
@@ -618,7 +655,7 @@ const ComparisonContent = ({
 // ============================================
 // MAIN COMPONENT
 // ============================================
-const VolunteerDashboard = () => {
+const DspDashboard = () => {
   const router = useRouter();
   const [activeUser, setActiveUser] = useState<{ email: string; name: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -682,4 +719,4 @@ const VolunteerDashboard = () => {
   );
 };
 
-export default VolunteerDashboard;
+export default DspDashboard;
