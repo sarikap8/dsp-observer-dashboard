@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image'; 
 import { useRouter } from 'next/navigation';
 import { getActiveUser, DSP_DIRECTORY, USER_DIRECTORY, getDspOptionsForObserver } from '../form/userDirectory';
+import Recommendations from './components/Recommendations';
 
 type DspInfo = {
   id: string;
@@ -182,16 +183,15 @@ const DspComparisonView = ({ activeUser }: { activeUser: { email: string; name: 
   const observerEntry = USER_DIRECTORY[observerEmail];
   const observerName = observerEntry?.name || 'Your Observer';
 
+  // Get DSP email - memoized outside useEffect for recommendations
+  const dspId = userEntry?.dspId;
+  const dspEmail = (dspId && DSP_DIRECTORY[dspId]?.email) 
+    ? DSP_DIRECTORY[dspId].email 
+    : activeUser.email;
+
   useEffect(() => {
     const fetchSubmissions = async () => {
       setLoading(true);
-      
-      // Get DSP email
-      let dspEmail = activeUser.email;
-      const dspId = userEntry?.dspId;
-      if (dspId && DSP_DIRECTORY[dspId]?.email) {
-        dspEmail = DSP_DIRECTORY[dspId].email;
-      }
 
       try {
         const response = await fetch(`/api/submissions/dsp?email=${encodeURIComponent(dspEmail)}`);
@@ -209,7 +209,7 @@ const DspComparisonView = ({ activeUser }: { activeUser: { email: string; name: 
     };
 
     fetchSubmissions();
-  }, [activeUser.email, userEntry?.dspId]);
+  }, [dspEmail]);
 
   const selfResponse = submissionData?.selfEvaluation?.questionResponse;
   const observerResponse = submissionData?.observerEvaluations?.[0]?.questionResponse;
@@ -264,6 +264,11 @@ const DspComparisonView = ({ activeUser }: { activeUser: { email: string; name: 
             stickyTop={0}
           />
         )}
+      </div>
+
+      {/* ML-Powered Recommendations */}
+      <div className="mt-6">
+        <Recommendations dspEmail={dspEmail} />
       </div>
 
       {/* Back to Form button */}
@@ -464,16 +469,24 @@ const ObserverComparisonView = ({ activeUser }: { activeUser: { email: string; n
                   <p className="text-sm mt-2">The DSP needs to submit their self-evaluation and you need to submit your observer evaluation.</p>
                 </div>
               ) : (
-                <ComparisonContent 
-                  selfResponse={selfResponse} 
-                  observerResponse={observerResponse} 
-                  selfAvg={selfAvg} 
-                  observerAvg={observerAvg}
-                  selfLabel="DSP Self Rating"
-                  observerLabel="Your Rating"
-                  stickyTopSlot={stickyDspHeader}
-                  stickyTop={0}
-                />
+                <>
+                  <ComparisonContent 
+                    selfResponse={selfResponse} 
+                    observerResponse={observerResponse} 
+                    selfAvg={selfAvg} 
+                    observerAvg={observerAvg}
+                    selfLabel="DSP Self Rating"
+                    observerLabel="Your Rating"
+                    stickyTopSlot={stickyDspHeader}
+                    stickyTop={0}
+                  />
+                  {/* ML-Powered Recommendations for selected DSP */}
+                  {selectedDsp?.email && (
+                    <div className="mt-6">
+                      <Recommendations dspEmail={selectedDsp.email} />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ) : (
